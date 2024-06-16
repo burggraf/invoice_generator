@@ -1,0 +1,13 @@
+[package]
+name = "invoice_generator"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sqlx = { version = "0.7.1", features = ["runtime-tokio-rustls", "postgres", "chrono", "bigdecimal"] }
+tokio = { version = "1", features = ["full"] }
+fake = "2.9.2"
+rand = "0.8.5"
+chrono = "0.4"
+bigdecimal = "0.3"
+dotenv = "0.15"
