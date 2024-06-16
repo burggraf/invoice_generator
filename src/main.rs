@@ -45,7 +45,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let start_date = NaiveDate::from_ymd_opt(2021, 1, 1).expect("Invalid start date");
     let end_date = NaiveDate::from_ymd_opt(2024, 6, 16).expect("Invalid end date");
 
-    for _ in 0..1000000 {
+    let args: Vec<String> = env::args().collect();
+    let num_invoices: i32 = args.get(1).expect("Please provide the number of invoices to create as a command line argument").parse().expect("The provided argument must be an integer");
+
+    for _ in 0..num_invoices {
         let invoice_date = random_date_in_range(&mut rng, start_date, end_date)
             .and_hms_opt(0, 0, 0)
             .expect("Invalid time");
@@ -77,7 +80,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let duration = start_time.elapsed();
-    println!("Inserted 1,000,000 invoices in: {:?}", duration);
+    println!("Inserted {} invoices in: {:?}", num_invoices, duration);
 
     Ok(())
 }
