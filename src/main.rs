@@ -27,7 +27,8 @@ fn random_date_in_range(rng: &mut impl Rng, start: NaiveDate, end: NaiveDate) ->
 }
 
 async fn create_invoices_table(pool: &sqlx::Pool<sqlx::Postgres>) -> Result<(), sqlx::Error> {
-    sqlx::query!(
+    println!("Creating invoices table...");
+    let result = sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS invoices (
             customer_id INT,
@@ -41,9 +42,18 @@ async fn create_invoices_table(pool: &sqlx::Pool<sqlx::Postgres>) -> Result<(), 
         "#
     )
     .execute(pool)
-    .await?;
+    .await;
 
-    Ok(())
+    match result {
+        Ok(_) => {
+            println!("Invoices table created or verified successfully.");
+            Ok(())
+        },
+        Err(e) => {
+            println!("Failed to create or verify invoices table: {}", e);
+            Err(e)
+        }
+    }
 }
 
 #[tokio::main]
@@ -116,7 +126,7 @@ async fn insert_invoices(pool: &sqlx::Pool<sqlx::Postgres>, invoices: &[Invoice]
     let tax_amounts: Vec<BigDecimal> = invoices.iter().map(|i| i.tax_amount.clone()).collect();
     let statuses: Vec<String> = invoices.iter().map(|i| i.status.clone()).collect();
 
-    sqlx::query!(
+    sqlx::query(
         r#"
         INSERT INTO invoices (customer_id, customer_name, invoice_date, due_date, total_amount, tax_amount, status)
         SELECT * FROM UNNEST(
@@ -128,15 +138,15 @@ async fn insert_invoices(pool: &sqlx::Pool<sqlx::Postgres>, invoices: &[Invoice]
             $6::numeric[],
             $7::text[]
         )
-        "#,
-        &customer_ids,
-        &customer_names,
-        &invoice_dates,
-        &due_dates,
-        &total_amounts,
-        &tax_amounts,
-        &statuses,
+        "#
     )
+    .bind(&customer_ids)
+    .bind(&customer_names)
+    .bind(&invoice_dates)
+    .bind(&due_dates)
+    .bind(&total_amounts)
+    .bind(&tax_amounts)
+    .bind(&statuses)
     .execute(pool)
     .await?;
 
