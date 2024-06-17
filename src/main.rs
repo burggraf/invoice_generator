@@ -26,6 +26,26 @@ fn random_date_in_range(rng: &mut impl Rng, start: NaiveDate, end: NaiveDate) ->
     start + Duration::days(rng.gen_range(0..=days_in_range))
 }
 
+async fn create_invoices_table(pool: &sqlx::Pool<sqlx::Postgres>) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+        CREATE TABLE IF NOT EXISTS invoices (
+            customer_id INT,
+            customer_name TEXT,
+            invoice_date TIMESTAMP,
+            due_date TIMESTAMP,
+            total_amount NUMERIC,
+            tax_amount NUMERIC,
+            status TEXT
+        )
+        "#
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
@@ -34,6 +54,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .max_connections(5)
         .connect(&database_url)
         .await?;
+
+    create_invoices_table(&pool).await?;
 
     let mut rng = rand::thread_rng();
     let statuses = vec!["Paid", "Pending", "Overdue"];
